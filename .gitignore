@@ -1,0 +1,28 @@
+node_modules/
+dist/
+*.js
+!jest.config.js
+*.d.ts
+.env
+.env.local
+
+# CDK asset staging directory
+cdk.out/
+
+# Parcel default cache directory
+.parcel-cache
+
+# npm/yarn
+yarn-error.log
+npm-debug.log
+
+# Mac
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Testing
+coverage/
+.nyc_output/
