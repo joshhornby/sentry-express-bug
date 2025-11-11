@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
+import {Construct} from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import {NodejsFunction, OutputFormat} from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigatewayv2';
 import * as apigatewayIntegrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as logs from 'aws-cdk-lib/aws-logs';
@@ -29,10 +29,34 @@ export class LambdaStack extends cdk.Stack {
       environment: {
         SENTRY_DSN: sentryDsn,
         NODE_ENV: 'staging',
+        NODE_OPTIONS: '--import ./instrument.js',
       },
       bundling: {
+        format: OutputFormat.CJS,
         target: 'es2022',
         sourceMap: true,
+        platform: 'linux/amd64',
+        forceDockerBundling: true,
+        nodeModules: [
+          '@sentry/aws-serverless',
+          'express',
+          '@codegenie/serverless-express'
+        ],
+        commandHooks: {
+          beforeBundling(inputDir: string, outputDir: string): string[] {
+            return [];
+          },
+          afterBundling(inputDir: string, outputDir: string): string[] {
+            return [
+              `cp ${inputDir}/src/instrument.ts ${outputDir}/instrument.ts`,
+              `cd ${outputDir} && npx esbuild instrument.ts --outfile=instrument.js --platform=node --target=es2022 --format=cjs`,
+              `rm ${outputDir}/instrument.ts`
+            ];
+          },
+          beforeInstall(inputDir: string, outputDir: string): string[] {
+            return [];
+          },
+        },
       },
     });
 
