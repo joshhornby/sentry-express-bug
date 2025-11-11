@@ -5,6 +5,7 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigatewayv2';
 import * as apigatewayIntegrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as path from 'path';
 
 export class LambdaStack extends cdk.Stack {
@@ -34,6 +35,18 @@ export class LambdaStack extends cdk.Stack {
         sourceMap: true,
       },
     });
+
+    logGroup.grantWrite(sentryLambda);
+
+    sentryLambda.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'logs:CreateLogGroup',
+        'logs:CreateLogStream',
+        'logs:PutLogEvents'
+      ],
+      resources: [`arn:aws:logs:${this.region}:${this.account}:*`],
+    }));
+
     const httpApi = new apigateway.HttpApi(this, 'SentryExpressApi', {
       description: 'Simple Express Lambda with Sentry',
       corsPreflight: {
